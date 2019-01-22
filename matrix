@@ -1,0 +1,41 @@
+#!/bin/bash
+umask 777
+
+##########################################################################################
+#Title: Matrix
+#Author: Tiffani Auer (frieseti@oregonstate.edu)
+#Class: OS CS344 - Winter 2019
+#Description:
+##########################################################################################
+
+
+
+#dims funct#
+function dims(){
+	echo "dims successfully called!"
+}
+
+#transpose funct#
+function transpose(){
+	echo "transpose successfully called!"
+}
+
+#mean funct#
+function mean(){
+	echo "mean successfully called!!"
+}
+
+#add funct#
+function add(){
+	echo "add successfully called!"
+}
+
+#multiply funct#
+function multiply(){
+	echo "multiply successfully called!"
+}
+
+#argument 1 from user, identifies what function they would like to use (dims, transpose etc)
+$1
+
+
