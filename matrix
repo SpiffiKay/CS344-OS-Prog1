@@ -1,11 +1,11 @@
 #!/bin/bash
 
-##########################################################################################
+################################################################################
 #Title: Matrix
 #Author: Tiffani Auer (frieseti@oregonstate.edu)
 #Class: OS CS344 - Winter 2019
 #Description:
-##########################################################################################
+################################################################################
 
 temprow="temprow$$"
 tempcol="tempcol$$"
@@ -14,22 +14,22 @@ tempsum="tempsumfile$$"
 
 #dims funct#
 function dims(){
-	#counting rows - read traverses an entire row until \n, then while loop moves to 
-	#the next row. r++ increments when this happens, thus counting the # of rows.
+	r=0
+	c=0
+
+	#counting rows#
 	while read rows
 	do
 		((r++))
 	done < $1
 
-	#counting cols - read reads in one row from the matrix, then the for loop
-	#traverses that row. c++ increments with each new number, which represents a 
-	#column, therefore counting columns.
+	#counting cols#
 	read col < $1
 	for i in $col
 	do
 		((c++))
 	done
-
+	
 	#print dimensions#
 	echo "$r $c"
 }
@@ -37,28 +37,32 @@ function dims(){
 #transpose funct#
 function transpose(){
 	j=1
-	
-	#count number of cols in matrix#
+	num=0
+
+	#count cols in matrix#
 	read col < $1
 	for i in $col
 	do
 		((num++))
 	done
 	
-	#make up for blank space
-	num=$(expr $num + $num)
+	#double num to make up for blank space#
+	#num=$(expr $num + $num)
 
 	while [[ "$j" -le "$num" ]]
 	do	
 		#the column to row conversion#		
-		cut -c $j $1 > $tempcol
-		cat $tempcol | tr '\n' ' ' >> $temprow
+		cut -f  $j $1  > $tempcol
+		cat $tempcol | tr '\n' '\t' >> $temprow
 		echo >> $temprow
 		#skips blank space#
-		j=$(expr $j + 2)
-
+		#j=$(expr $j + 2)
+		((j++))
+		#cut -c $j  
 	done
 		cat $temprow
+		echo
+		cat -A $temprow
 }
 
 #mean funct#
