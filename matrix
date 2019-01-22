@@ -12,7 +12,24 @@ umask 777
 
 #dims funct#
 function dims(){
-	echo "dims successfully called!"
+	#counting rows - read traverses an entire row until \n, then while loop moves to 
+	#the next row. r++ increments when this happens, thus counting the # of rows.
+	while read rows
+	do
+		((r++))
+	done < $1
+
+	#counting cols - read reads in one row from the matrix, then the for loop
+	#traverses that row. c++ increments with each new number, which represents a 
+	#column, therefore counting columns.
+	read col < $1
+	for i in $col
+	do
+		((c++))
+	done
+
+	#print dimensions#
+	echo "$r $c"
 }
 
 #transpose funct#
@@ -35,7 +52,19 @@ function multiply(){
 	echo "multiply successfully called!"
 }
 
+
+#readMatrix funct#
+function readmtrx(){
+while read mtrx
+do
+	echo "$mtrx"
+done < $1
+#$1 because its the first argument within scope#
+}
+
+
 #argument 1 from user, identifies what function they would like to use (dims, transpose etc)
-$1
+#, and the rest passes the matrices to the arguments 
+$1 "${@:2}"
 
 
