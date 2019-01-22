@@ -14,13 +14,13 @@ tempsum="tempsumfile$$"
 
 #dims funct#
 function dims(){
-	r=0
+	l=0
 	c=0
 
 	#counting rows#
 	while read rows
 	do
-		((r++))
+		((l++))
 	done < $1
 
 	#counting cols#
@@ -31,7 +31,7 @@ function dims(){
 	done
 	
 	#print dimensions#
-	echo "$r $c"
+	echo "$l $c"
 }
 
 #transpose funct#
@@ -53,6 +53,10 @@ function transpose(){
 	do	
 		#the column to row conversion#		
 		cut -f  $j $1  > $tempcol
+		truncate -s-1 $tempcol
+		#echo "temp:"
+		#cat -A $tempcol
+
 		cat $tempcol | tr '\n' '\t' >> $temprow
 		echo >> $temprow
 		#skips blank space#
@@ -61,13 +65,18 @@ function transpose(){
 		#cut -c $j  
 	done
 		cat $temprow
-		echo
-		cat -A $temprow
+		#echo
+		#cat -A $temprow
+
+	#clean up temp files#
+	rm -f $tempcol
+	rm -f $temprow
 }
+
 
 #mean funct#
 function mean(){
-	echo "mean successfully called!!"
+	echo "hi"	
 }
 
 #add funct#
