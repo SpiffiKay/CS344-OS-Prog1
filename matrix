@@ -1,5 +1,4 @@
 #!/bin/bash
-umask 777
 
 ##########################################################################################
 #Title: Matrix
@@ -8,7 +7,10 @@ umask 777
 #Description:
 ##########################################################################################
 
-
+temprow="temprow$$"
+tempcol="tempcol$$"
+tempmean="tempmeanfile$$"
+tempsum="tempsumfile$$"
 
 #dims funct#
 function dims(){
@@ -34,7 +36,29 @@ function dims(){
 
 #transpose funct#
 function transpose(){
-	echo "transpose successfully called!"
+	j=1
+	
+	#count number of cols in matrix#
+	read col < $1
+	for i in $col
+	do
+		((num++))
+	done
+	
+	#make up for blank space
+	num=$(expr $num + $num)
+
+	while [[ "$j" -le "$num" ]]
+	do	
+		#the column to row conversion#		
+		cut -c $j $1 > $tempcol
+		cat $tempcol | tr '\n' ' ' >> $temprow
+		echo >> $temprow
+		#skips blank space#
+		j=$(expr $j + 2)
+
+	done
+		cat $temprow
 }
 
 #mean funct#
@@ -59,7 +83,7 @@ while read mtrx
 do
 	echo "$mtrx"
 done < $1
-#$1 because its the first argument within scope#
+#$1 hecause its the first argument within scope#
 }
 
 
