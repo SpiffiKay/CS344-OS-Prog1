@@ -7,31 +7,34 @@
 #Description:
 ################################################################################
 
+tempdims="tempdims$$"
 temprow="temprow$$"
 tempcol="tempcol$$"
 tempmean="tempmeanfile$$"
 tempsum="tempsumfile$$"
 
 #dims funct#
-function dims(){
+function dims(){ 
 	l=0
 	c=0
+	
+	cat $1 >> $tempdims 
 
-	#counting rows#
-	while read rows
-	do
-		((l++))
-	done < $1
+	#while read mtrx
+	#do
+	#	echo "$mtrx" >> $tempdims
+	#done < $1 
+		
+	#columns#
+	l=$(cat $tempdims | wc -l)
 
-	#counting cols#
-	read col < $1
-	for i in $col
-	do
-		((c++))
-	done
+	#rows#
+	c=$(cat $tempdims | head -n 1 | wc -w)
 	
 	#print dimensions#
-	echo "$l $c"
+	echo -e  "$l $c"
+	
+	rm -f $tempdims
 }
 
 #transpose funct#
@@ -46,27 +49,17 @@ function transpose(){
 		((num++))
 	done
 	
-	#double num to make up for blank space#
-	#num=$(expr $num + $num)
-
+	#column to row conversion
 	while [[ "$j" -le "$num" ]]
-	do	
-		#the column to row conversion#		
+	do			
 		cut -f  $j $1  > $tempcol
 		truncate -s-1 $tempcol
-		#echo "temp:"
-		#cat -A $tempcol
-
 		cat $tempcol | tr '\n' '\t' >> $temprow
 		echo >> $temprow
-		#skips blank space#
-		#j=$(expr $j + 2)
 		((j++))
-		#cut -c $j  
 	done
-		cat $temprow
-		#echo
-		#cat -A $temprow
+	
+	cat $temprow
 
 	#clean up temp files#
 	rm -f $tempcol
@@ -75,8 +68,16 @@ function transpose(){
 
 
 #mean funct#
-function mean(){
-	echo "hi"	
+function mean(){		
+	l=0
+	c=0
+	#gather dimensions#
+	l=$(wc -l < $1)
+	c=$(head -n 1 $1 | wc -w)
+	#print dimensions#
+	echo -e  "$l $c"
+
+
 }
 
 #add funct#
@@ -96,7 +97,7 @@ while read mtrx
 do
 	echo "$mtrx"
 done < $1
-#$1 hecause its the first argument within scope#
+
 }
 
 
