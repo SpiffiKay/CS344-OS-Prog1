@@ -10,8 +10,15 @@
 tempdims="tempdims$$"
 temprow="temprow$$"
 tempcol="tempcol$$"
-tempmean="tempmeanfile$$"
-tempsum="tempsumfile$$"
+tempmean="tempmean$$"
+tempsum="tempsum$$"
+tempdump="tempdump$$"
+tempavg="tempavg$$"
+
+#calls the clean function to clean up temp files at the end of the program, or #
+#if the program is interrupted by one of the exceptions represented by the     #
+#numbers: 0-exit from shell, 1-clean tidyup, 2-interrupt, 3-quit, 6-abort      #
+#trap clean; INT HUP TERM
 
 #dims funct#
 function dims(){ 
@@ -19,38 +26,27 @@ function dims(){
 	c=0
 	
 	cat $1 >> $tempdims 
-
-	#while read mtrx
-	#do
-	#	echo "$mtrx" >> $tempdims
-	#done < $1 
-		
-	#columns#
+	
+	#rows#
 	l=$(cat $tempdims | wc -l)
 
-	#rows#
+	#columns#
 	c=$(cat $tempdims | head -n 1 | wc -w)
 	
 	#print dimensions#
 	echo -e  "$l $c"
-	
-	rm -f $tempdims
 }
 
 #transpose funct#
 function transpose(){
 	j=1
-	num=0
+	c=0
 
-	#count cols in matrix#
-	read col < $1
-	for i in $col
-	do
-		((num++))
-	done
+	#column count#
+	c=$(cat $1 | head -n 1 | wc -w)
 	
 	#column to row conversion
-	while [[ "$j" -le "$num" ]]
+	while [[ "$j" -le "$c" ]]
 	do			
 		cut -f  $j $1  > $tempcol
 		truncate -s-1 $tempcol
@@ -60,24 +56,44 @@ function transpose(){
 	done
 	
 	cat $temprow
-
-	#clean up temp files#
-	rm -f $tempcol
-	rm -f $temprow
 }
 
 
 #mean funct#
 function mean(){		
-	l=0
-	c=0
-	#gather dimensions#
-	l=$(wc -l < $1)
-	c=$(head -n 1 $1 | wc -w)
-	#print dimensions#
-	echo -e  "$l $c"
 
+	#use transpose function to invert matrix so we average the correct numbers#
+	#we return to a temp file so it doesn't print to screen.		  #
+	transpose $1 > $tempdump
+	#cat $temprow
 
+	#traverse through the matrix#
+	while read row
+	do
+		#reset vars each iteration#
+		sum=0
+		count=0
+		avg=0
+
+		for i in $row
+		do
+			#add all numbers in matrix#
+			sum=$((sum + i))
+			((count++))		
+		#	echo "sum: $sum"
+		#	echo "count: $count"
+		done
+
+		avg=$(((sum + (count/2)*((sum>0)*2 - 1) )/count))
+		#echo "avg: $avg"
+		echo "$avg" >> $tempavg
+	done <  $temprow
+		echo "tempavg:"
+		cat "$tempavg"		
+		truncate -s-1 $tempavg	
+		cat $tempavg | tr '\n' '\t' >> $tempmean
+		echo >> $tempmean
+		cat -A $tempmean
 }
 
 #add funct#
@@ -100,9 +116,12 @@ done < $1
 
 }
 
+#removes temporary files#
+clean(){
+	rm -f *$$
+}
 
 #argument 1 from user, identifies what function they would like to use (dims, transpose etc)
 #, and the rest passes the matrices to the arguments 
 $1 "${@:2}"
-
 
