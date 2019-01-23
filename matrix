@@ -62,10 +62,9 @@ function transpose(){
 #mean funct#
 function mean(){		
 	#use transpose function to invert matrix so we average the correct# 
-	#numbers, dump output to temp file#
+	#numbers, dump output to temp file so it doesn't print to screen  #
 	transpose $1 > $tempdump
-	#echo: "transposed matrix:"
-	#cat $temprow
+
 
 	#traverse through the matrix#
 	while read row
@@ -80,18 +79,13 @@ function mean(){
 			#add all numbers in matrix#
 			sum=$((sum + i))
 			((count++))		
-		#	echo "sum: $sum"
-		#	echo "count: $count"
 		done
 
 		avg=$(((sum + (count/2)*((sum>0)*2 - 1) )/count))
-		#echo "avg: $avg"
 		echo "$avg" >> $tempavg
 	done <  $temprow
 		
-		
-		#echo "tempavg:"
-		#cat "$tempavg"		
+		#format means for output and print to screen#
 		truncate -s-1 $tempavg	
 		cat $tempavg | tr '\n' '\t' >> $tempmean
 		echo >> $tempmean
