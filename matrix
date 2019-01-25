@@ -142,6 +142,7 @@ function multiply(){
 	lrow=0
 	rcol=0
 	rrow=0
+	m=1
 
 	#get dimensions of matrices#	
 	lrow=$(cat $1 | wc -l)
@@ -157,47 +158,47 @@ function multiply(){
 	dump=$(transpose $2)
 	
 	#separate the values#
-	cat $1 | tr '\t' '\n' > $left
+	#cat $1 | tr '\t' '\n' > $left
 	cat $temprow | tr '\t' '\n' > $right
 
-	echo "left:"
-	cat -A $left
-	echo "right:"
-	cat -A $right
+	#column to row conversion#
+	while [[ "$m" -lt "$lcol" ]]
+	do			
+		lmtrx=$(cut -f $m $1) #> $temprow
+		((m++))
+	
+		echo "temprow"
+		cat -A $temprow	
+
+		while read rmtrx
+		do	
+			for i in $lmtrx
+			do
+				prod=1
+				prod=$((i * rmtrx))
+				sum=$((sum + prod))		
+			done 
+			
+			echo $sum > $tempsum
+			#truncate -s-1 $tempsum
+			cat $tempsum | tr '\n' '\t' >> $tempmtrx
+			sum=0
+			((j++))
+
+			if [[ $j -eq $rcol ]] 
+			then
+				truncate -s-1 $tempmtrx
+				echo >> $tempmtrx
+				j=0
+			fi
+		done < $right
+	done
+
+	echo "tempmtrx:"
+	cat -A $tempmtrx
+
 	
 
-	while read lmtrx <&3 && read rmtrx <&4
-	do	
-		prod=1
-		
-		prod=$((lmtrx * rmtrx))
-		sum=$((sum + prod))		
-		((j++))
-		echo "prod: $prod sum: $sum"
-		
-		if [[ $j -eq $lcol ]]
-		then
-			echo $sum > $tempsum
-			cat $tempsum | tr '\n' '\t' >> $tempmtrx
-			((i++))
-			sum=0
-			j=0
-		fi	
-
-		#add \n for new matrix row#
-		if [[ $i -eq  $rcol ]]
-		then
-		#	echo $sum > $tempsum
-		#	cat $tempsum | tr '\n' '\t' >> $tempmtrx
-			truncate -s -1 $tempmtrx
-			echo >> $tempmtrx
-			#isum=0
-			i=0
-		fi
-
-
-	done 3< $left 4< $right
-	cat -A $tempmtrx
 }
 
 
