@@ -16,7 +16,7 @@ tempsum="tempsum$$"
 tempavg="tempavg$$"
 left="templeft$$"
 right="tempright$$"
-
+tempprod="tempprod$$"
 
 
 
@@ -68,7 +68,7 @@ function transpose(){
 function mean(){		
 	#use transpose function to invert matrix so we average the correct# 
 	#numbers, dump output to temp file so it doesn't print to screen  #
-	dump=$(transpose $1) # > $tempdump
+	dump=$(transpose $1)
 
 
 	#traverse through the matrix#
@@ -136,12 +136,12 @@ function add(){
 }
 
 #multiply funct#
-function multiply(){
-	
+function multiply(){	
 	lcol=0
 	lrow=0
 	rcol=0
 	rrow=0
+	prod=1
 
 	#get dimensions of matrices#	
 	lrow=$(cat $1 | wc -l)
@@ -149,28 +149,56 @@ function multiply(){
 
 	rrow=$(cat $2 | wc -l)
 	rcol=$(cat $2 | head -n 1 | wc -w)
+	
+	dump=$(transpose $2)
 
+	
 	#separate the values#
 	cat $1 | tr '\t' '\n' > $left
-	cat $2 | tr '\t' '\n' > $right
+	cat $temprow | tr '\t' '\n' > $right
 	
-	#add the matrices#		
-	while read lmtrx <&3 && read rmtrx <&4
+	#multiply left rows#
+	while read row
 	do
-		sum=$((lmtrx + rmtrx))
-		echo $sum > $tempsum
-		cat $tempsum | tr '\n' '\t' >> $tempmtrx
 	
-		((k++))
+		prod=$(($prod * row))
+		echo "prod: $prod"		
+		((i++))
 		#add \n for new matrix row#
-		if [[ $k -eq  $lcol ]]
+		if [[ $i -eq  $lcol ]]
 		then
+			echo $prod > $tempsum
+			cat $tempsum | tr '\n' '\t' >> $tempmtrx
 			truncate -s -1 $tempmtrx
 			echo >> $tempmtrx
-			k=0
+			prod=1
+			i=0
 		fi
-	done 3< $left 4< $right
+	done <  $left
+		
+		echo "left multiplied:"
 
+		cat -A $tempmtrx
+	
+
+	#add the matrices#		
+	#while read lmtrx <&3 && read rmtrx <&4
+	#do
+	#	sum=$((lmtrx + rmtrx))
+	#	echo $sum > $tempsum
+	#	cat $tempsum | tr '\n' '\t' >> $tempmtrx
+	
+	#	((k++))
+		#add \n for new matrix row#
+	#	if [[ $k -eq  $lcol ]]
+	#	then
+	#		truncate -s -1 $tempmtrx
+	#		echo >> $tempmtrx
+	#		k=0
+	#	fi
+	#done 3< $left 4< $right
+
+	#cat $tempmtrx
 }
 
 
