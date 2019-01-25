@@ -17,7 +17,8 @@ tempavg="tempavg$$"
 left="templeft$$"
 right="tempright$$"
 tempprod="tempprod$$"
-
+mleft="templeft2$$"
+mright="tempright2$$"
 
 
 #calls the clean function to clean up temp files at the end of the program, or #
@@ -120,9 +121,9 @@ function add(){
 	do
 		sum=$((lmtrx + rmtrx))
 		echo $sum > $tempsum
-		cat $tempsum | tr '\n' '\t' >> $tempmtrx
-	
+		cat $tempsum | tr '\n' '\t' >> $tempmtrx	
 		((k++))
+
 		#add \n for new matrix row#
 		if [[ $k -eq  $lcol ]]
 		then
@@ -141,7 +142,6 @@ function multiply(){
 	lrow=0
 	rcol=0
 	rrow=0
-	prod=1
 
 	#get dimensions of matrices#	
 	lrow=$(cat $1 | wc -l)
@@ -149,56 +149,55 @@ function multiply(){
 
 	rrow=$(cat $2 | wc -l)
 	rcol=$(cat $2 | head -n 1 | wc -w)
-	
-	dump=$(transpose $2)
 
+	echo "lrow: $lrow lcol: $lcol"
+	echo "rrow: $rrow rcol: $rcol"
+
+	#reformat second matrix for easier multiplying#	
+	dump=$(transpose $2)
 	
 	#separate the values#
 	cat $1 | tr '\t' '\n' > $left
 	cat $temprow | tr '\t' '\n' > $right
+
+	echo "left:"
+	cat -A $left
+	echo "right:"
+	cat -A $right
 	
-	#multiply left rows#
-	while read row
-	do
-	
-		prod=$(($prod * row))
-		echo "prod: $prod"		
-		((i++))
-		#add \n for new matrix row#
-		if [[ $i -eq  $lcol ]]
+
+	while read lmtrx <&3 && read rmtrx <&4
+	do	
+		prod=1
+		
+		prod=$((lmtrx * rmtrx))
+		sum=$((sum + prod))		
+		((j++))
+		echo "prod: $prod sum: $sum"
+		
+		if [[ $j -eq $lcol ]]
 		then
-			echo $prod > $tempsum
+			echo $sum > $tempsum
 			cat $tempsum | tr '\n' '\t' >> $tempmtrx
+			((i++))
+			sum=0
+			j=0
+		fi	
+
+		#add \n for new matrix row#
+		if [[ $i -eq  $rcol ]]
+		then
+		#	echo $sum > $tempsum
+		#	cat $tempsum | tr '\n' '\t' >> $tempmtrx
 			truncate -s -1 $tempmtrx
 			echo >> $tempmtrx
-			prod=1
+			#isum=0
 			i=0
 		fi
-	done <  $left
-		
-		echo "left multiplied:"
 
-		cat -A $tempmtrx
-	
 
-	#add the matrices#		
-	#while read lmtrx <&3 && read rmtrx <&4
-	#do
-	#	sum=$((lmtrx + rmtrx))
-	#	echo $sum > $tempsum
-	#	cat $tempsum | tr '\n' '\t' >> $tempmtrx
-	
-	#	((k++))
-		#add \n for new matrix row#
-	#	if [[ $k -eq  $lcol ]]
-	#	then
-	#		truncate -s -1 $tempmtrx
-	#		echo >> $tempmtrx
-	#		k=0
-	#	fi
-	#done 3< $left 4< $right
-
-	#cat $tempmtrx
+	done 3< $left 4< $right
+	cat -A $tempmtrx
 }
 
 
