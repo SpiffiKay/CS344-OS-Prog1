@@ -7,17 +7,17 @@
 #Description:
 ################################################################################
 
+tempmtrx="tempmtrx$$"
 tempdims="tempdims$$"
 temprow="temprow$$"
 tempcol="tempcol$$"
 tempmean="tempmean$$"
 tempsum="tempsum$$"
-tempdump="tempdump$$"
 tempavg="tempavg$$"
 left="templeft$$"
 right="tempright$$"
-row="temprow$$"
-col="tempcol$$"
+
+
 
 
 #calls the clean function to clean up temp files at the end of the program, or #
@@ -68,7 +68,7 @@ function transpose(){
 function mean(){		
 	#use transpose function to invert matrix so we average the correct# 
 	#numbers, dump output to temp file so it doesn't print to screen  #
-	transpose $1 > $tempdump
+	dump=$(transpose $1) # > $tempdump
 
 
 	#traverse through the matrix#
@@ -103,107 +103,74 @@ function add(){
 	lrow=0
 	rcol=0
 	rrow=0
-	i=1
-
-	touch $tempcol
-	touch $col
-
-	cat $1 > $left
-	cat $2 > $right
 
 	#get dimensions of matrices#	
-	lrow=$(cat $left | wc -l)
-	lcol=$(cat $left | head -n 1 | wc -w)
-	echo "left dimensions: $lrow $lcol"
-	echo	
+	lrow=$(cat $1 | wc -l)
+	lcol=$(cat $1 | head -n 1 | wc -w)
 
-	rrow=$(cat $right | wc -l)
-	rcol=$(cat $right | head -n 1 | wc -w)
-	echo "right dimensions: $rrow $rcol"
+	rrow=$(cat $2 | wc -l)
+	rcol=$(cat $2 | head -n 1 | wc -w)
 
-
-
-	#read matrices into temp files at the same time. <&num redirects to #
-	#specific file							    #
-	#while read lmtrx <&3 && read rmtrx <&4
-	#do
-	#done 3<$left 4<$right
-
-	while [[ "$i" -le "$lrow" ]]
+	#separate the values#
+	cat $1 | tr '\t' '\n' > $left
+	cat $2 | tr '\t' '\n' > $right
+	
+	#add the matrices#		
+	while read lmtrx <&3 && read rmtrx <&4
 	do
-		j=1
+		sum=$((lmtrx + rmtrx))
+		echo $sum > $tempsum
+		cat $tempsum | tr '\n' '\t' >> $tempmtrx
 	
-		#column to row conversion
-		while [[ "$j" -le "$lcol" ]]
-		do			
-			#cat $lmtrx | cut -f $j > $tempcol
-			#truncate -s-1 $tempcol
-			#cat $tempcol | tr '\n' '\t' >> $temprow
-			#echo >> $temprow
-			#((j++))
-			#echo "temprow: "
-			#cat $temprow
-			
-			#cat $rmtrx | cut -f $j > $col
-			#truncate -s-1 $col
-			#cat $col | tr '\n' '\t' >> $row
-			#echo >> $row
-			#((j++))
-			#echo "tempcol: "
-			#cat $row
-	
-			cut -f $j $left > $tempcol
-			cut -f $j $right > $col	
-			echo "left:"
-			cat $tempcol
-			echo "right:"
-			cat $col
+		((k++))
+		#add \n for new matrix row#
+		if [[ $k -eq  $lcol ]]
+		then
+			truncate -s -1 $tempmtrx
+			echo >> $tempmtrx
+			k=0
+		fi
+	done 3< $left 4< $right
 
-			((j++))
-		#	while read lmtrx <&3 && read rmtrx <&4
-		#	do
-		#		sum=$((lmtrx + rmtrx))
-		#		echo "sum: $sum"
-		#		echo "lmtrx: $lmtrx"
-		#		echo "rmtrx: $rmtrx"
-		#	done 3<$tempcol 4<$col
-			
-		done
-	
-		((i++))
-	done
-
-
-	
-
-	#traverse through the matrix#
-#	while read row
-	#do
-		#reset vars each iteration#
-	#	sum=0
-	#	count=0
-
-
-	#	for i in $row
-	#	do
-			#add all numbers in matrix#
-	#		sum=$((sum + i))
-	#		((count++))		
-	#	done	
-#	done <  $temprow
-	
-		
-	#format means for output and print to screen#
-#	truncate -s-1 $tempavg	
-#	cat $tempavg | tr '\n' '\t' >> $tempmean
-#	echo >> $tempmean
-#	cat $tempmean
-
+	cat $tempmtrx
 }
 
 #multiply funct#
 function multiply(){
-	echo "multiply successfully called!"
+	
+	lcol=0
+	lrow=0
+	rcol=0
+	rrow=0
+
+	#get dimensions of matrices#	
+	lrow=$(cat $1 | wc -l)
+	lcol=$(cat $1 | head -n 1 | wc -w)
+
+	rrow=$(cat $2 | wc -l)
+	rcol=$(cat $2 | head -n 1 | wc -w)
+
+	#separate the values#
+	cat $1 | tr '\t' '\n' > $left
+	cat $2 | tr '\t' '\n' > $right
+	
+	#add the matrices#		
+	while read lmtrx <&3 && read rmtrx <&4
+	do
+		sum=$((lmtrx + rmtrx))
+		echo $sum > $tempsum
+		cat $tempsum | tr '\n' '\t' >> $tempmtrx
+	
+		((k++))
+		#add \n for new matrix row#
+		if [[ $k -eq  $lcol ]]
+		then
+			truncate -s -1 $tempmtrx
+			echo >> $tempmtrx
+			k=0
+		fi
+	done 3< $left 4< $right
+
 }
 
 
@@ -224,4 +191,6 @@ clean(){
 #argument 1 from user, identifies what function they would like to use (dims, transpose etc)
 #, and the rest passes the matrices to the arguments 
 $1 "${@:2}"
-clean  
+clean 
+
+ 
