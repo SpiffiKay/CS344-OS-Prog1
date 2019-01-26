@@ -143,6 +143,13 @@ function multiply(){
 	rcol=0
 	rrow=0
 	m=1
+	n=1
+
+	cat $1
+	echo
+	cat $2
+	echo
+
 
 	#get dimensions of matrices#	
 	lrow=$(cat $1 | wc -l)
@@ -153,51 +160,57 @@ function multiply(){
 
 	echo "lrow: $lrow lcol: $lcol"
 	echo "rrow: $rrow rcol: $rcol"
+	echo
 
-	#reformat second matrix for easier multiplying#	
-	dump=$(transpose $2)
+	#reformat first matrix so formats match#	
+	dump=$(transpose $1)
 	
+	#seems unnecessary#
 	#separate the values#
-	#cat $1 | tr '\t' '\n' > $left
-	cat $temprow | tr '\t' '\n' > $right
-
-	#column to row conversion#
-	while [[ "$m" -lt "$lcol" ]]
-	do			
-		lmtrx=$(cut -f $m $1) #> $temprow
-		((m++))
+	#cat $temprow | tr '\t' '\n' > $left
+	#cat $2 | tr '\t' '\n' > $right
+	#everything above here works correctly#
 	
-		echo "temprow"
-		cat -A $temprow	
+	#this works correctly#
+	while [[ $m -le $lrow ]]
+	do			
+		
+		#this works correctly#
+		#cycles through the left matrix#
+		cut -f $m $temprow > $left
 
-		while read rmtrx
-		do	
-			for i in $lmtrx
-			do
-				prod=1
-				prod=$((i * rmtrx))
-				sum=$((sum + prod))		
-			done 
+		#cycles through the right matrix and multiplies with corresponding 	#
+		#left matrix row							#
+		while [[ $n -le $lrow ]]
+		do
+			#this works correctly#
+			cut -f $n $2 > $right
+			((n++))
 			
-			echo $sum > $tempsum
-			#truncate -s-1 $tempsum
-			cat $tempsum | tr '\n' '\t' >> $tempmtrx
-			sum=0
-			((j++))
+		#add the matrices#		
+		while read lmtrx <&3 && read rmtrx <&4
+		do
+		#	sum=$((lmtrx + rmtrx))
+		#	echo $sum > $tempsum
+		#	cat $tempsum | tr '\n' '\t' >> $tempmtrx	
+		#	((k++))
+			echo "lnum: $lmtrx rnum: $rmtrx"
+			#add \n for new matrix row#
+		#	if [[ $k -eq  $lcol ]]
+		#	then
+		#		truncate -s -1 $tempmtrx
+		#		echo >> $tempmtrx
+		#		k=0
+		#	fi
+		done 3< $left 4< $right	
+		done
 
-			if [[ $j -eq $rcol ]] 
-			then
-				truncate -s-1 $tempmtrx
-				echo >> $tempmtrx
-				j=0
-			fi
-		done < $right
+		n=1
+		((m++))	
 	done
 
-	echo "tempmtrx:"
-	cat -A $tempmtrx
-
-	
+	#echo "tempmtrx:"
+	#cat -A $tempmtrx
 
 }
 
