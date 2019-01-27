@@ -31,6 +31,18 @@ function dims(){
 	l=0
 	c=0
 	
+#	if [[ $# -ne 1 ]]
+#	then
+#		echo "Please only send one matrix at a time." > &2
+#		clean
+#		exit 2
+#	elif [[ ! -s $1 || ! -f $1 ]]
+#	then
+#		echo "$1 is invalid or empty" > $stderr
+#		clean
+#		exit 2
+#	fi
+	
 	cat $1 > $tempdims 
 	
 	#rows#
@@ -41,6 +53,8 @@ function dims(){
 	
 	#print dimensions#
 	echo -e  "$l $c"
+
+	exit 0
 }
 
 #transpose funct#
