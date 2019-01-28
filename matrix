@@ -311,10 +311,10 @@ case $1 in
 		then
 			echo "empty files do not make for exciting addition." >&2
 			exit 1	
-	#	elif [ $lrow -ne $rcol ] || [ $lcol -ne $rrow ]
-	#	then		
-	#		echo "your matrices are incompatible and will fight if put together." >&2
-	#		exit 1
+		elif [ $lcol -ne $rrow ]
+		then		
+			echo "your matrices are incompatible and will fight if put together." >&2
+			exit 1
 		else
 			multiply $2 $3
 		fi
