@@ -4,7 +4,6 @@
 #Title: Matrix
 #Author: Tiffani Auer (frieseti@oregonstate.edu)
 #Class: OS CS344 - Winter 2019
-#Description:
 ################################################################################
 
 temp="temp$$"
@@ -14,18 +13,26 @@ tempcol="tempcol$$"
 tempmean="tempmean$$"
 tempsum="tempsum$$"
 tempavg="tempavg$$"
-left="templeft$$"
-right="tempright$$"
-tempprod="tempprod$$"
 
 
+################################################################################
+#Title: clean 
+#
+#Description: removes temporary files
 
-#calls the clean function to clean up temp files at the end of the program, or #
-#if the program is interrupted by one of the exceptions represented by the     #
-#numbers: 0-exit from shell, 1-clean tidyup, 2-interrupt, 3-quit, 6-abort      #
-#trap clean; INT HUP TERM
+################################################################################
+clean(){
+	rm -f *$$
+}
 
-#dims funct#
+trap clean INT HUP TERM
+
+################################################################################
+#Title: dims 
+#
+#Description: takes a single matrix and finds its dimenstions. It then prints 
+#them to screen as "Rows Cols"
+################################################################################
 function dims(){ 
 	l=0
 	c=0
@@ -40,12 +47,16 @@ function dims(){
 	echo -e  "$l $c"
 }
 
-#transpose funct#
+################################################################################
+#Title: transpose
+#
+#Description: takes a single matrix and turns it's columns into it's rows, then
+#prints the new matrix to screen
+################################################################################
 function transpose(){
 	j=1
 	c=0
 
-	#column count#
 	c=$(cat $1 | head -n 1 | wc -w)
 	
 	#column to row conversion
@@ -61,25 +72,28 @@ function transpose(){
 	cat $temprow
 }
 
-
-#mean funct#
+################################################################################
+#Title: mean
+#
+#Description: takes one matrix and finds the mean of each column, then prints
+#the results to screen in matrix format
+################################################################################
 function mean(){		
 	#use transpose function to invert matrix so we average the correct# 
 	#numbers, dump output to temp file so it doesn't print to screen  #
 	dump=$(transpose $1)
 
-
-	#traverse through the matrix#
+	#traverse through the matrix, one row at a time#
 	while read row
 	do
 		#reset vars each iteration#
 		sum=0
 		count=0
 		avg=0
-
+		
+		#add all numbers in row#
 		for i in $row
 		do
-			#add all numbers in matrix#
 			sum=$((sum + i))
 			((count++))		
 		done
@@ -89,14 +103,21 @@ function mean(){
 		echo "$avg" >> $tempavg
 	done <  $temprow
 		
-		#format means for output and print to screen#
+		#format totals for output#
 		truncate -s-1 $tempavg	
 		cat $tempavg | tr '\n' '\t' >> $tempmean
 		echo >> $tempmean
+		
 		cat $tempmean
 }
 
-#add funct#
+################################################################################
+#Title: add
+#
+#Description: takes 2 matrices of the same size and adds each number in the
+#same corresponding spot together. The resulting matrix is then printed to 
+#screen
+################################################################################
 function add(){
 	lcol=0
 	lrow=0
@@ -134,7 +155,15 @@ function add(){
 	cat $tempmtrx
 }
 
-#multiply funct#
+################################################################################
+#Title: multiply 
+#
+#Description: multiply two matrices (not describing matrix multiplication here
+#because it would take a ton of space, instead I offer this:
+# https://www.mathsisfun.com/algebra/matrix-multiplying.html ). 
+#Once the calculations are successfully processed through, the results matrix is
+#printed to screen.  
+################################################################################
 function multiply(){	
 	lcol=0
 	lrow=0
@@ -151,20 +180,19 @@ function multiply(){
 	rrow=$(cat $2 | wc -l)
 	rcol=$(cat $2 | head -n 1 | wc -w)
 
-	#reformat first matrix so formats match#	
+	#reformat first matrix so matrices are same format to work with#	
 	dump=$(transpose $1)
 		
-	#this works correctly#
+	#cycles through the left matrix#
 	while [[ $m -le $lrow ]]
 	do			
-		#cycles through the left matrix#
-		cut -f $m $temprow > $left
+		
+		lft=$(cut -f $m $temprow)
 
-		#cycles through the right matrix and multiplies with corresponding 	#
-		#left matrix row							#
+		#cycles through the right matrix#				
 		while [[ $n -le $rcol ]]
 		do
-			cut -f $n $2 > $right
+			rght=$(cut -f $n $2)
 			((n++))
 			
 			#multiply the matrices#		
@@ -172,7 +200,7 @@ function multiply(){
 			do
 				prod=$((lmtrx * rmtrx))
 				sum=$((sum + prod))
-			done 3< $left 4< $right				
+			done 3<<< "$lft" 4<<< "$rght"				
 				
 			echo $sum | tr '\n' '\t' >> $tempmtrx	
 			prod=1
@@ -188,7 +216,13 @@ function multiply(){
 }
 
 
-#readMatrix funct: it's for me, not you ;)#
+################################################################################
+#Title: readmtrx 
+#
+#Description: I made this function to help me with debugging and clarity. It 
+#isn't req'd, but also isn't causing any problems, and I've grown quite fond
+#of it, so it stays. 
+################################################################################
 function readmtrx(){
 while read mtrx
 do
@@ -197,12 +231,15 @@ done < $1
 
 }
 
-#removes temporary files#
-clean(){
-	rm -f *$$
-}
 
 
+################################################################################
+#Title: main
+#
+#Description: Validates input as required for each function called, then, if 
+#valid, calls desired function. When said function is finished running it calls
+#clean to clean up any temporary files.
+################################################################################
 main(){
  
 #validate input and call functions#
@@ -210,13 +247,15 @@ case $1 in
 	dims)
 		#gives input from stdin permanency#
 		cat $2 > $temp
-
+		
+		#too many args#
 		if [[ -f $3 ]]
 		then
 			echo "dims goes dark with more than one matrix." >&2
 			clean
 			exit 1
-		elif [ ! -f $temp ] || [ ! -s $temp  ]
+		#file is unreadable#
+		elif [ ! -f $temp ] || [ ! -s $temp  ] || [ ! -r $temp ]
 		then
 			echo "yo' file is broke." >&2
 			clean
@@ -224,16 +263,15 @@ case $1 in
 		else
 			dims $temp
 		fi
-
 	;;
 	transpose)
-
+		
 		if [[ -f $3 ]]
 		then
 			echo "more than one matrix makes transpose cry." >&2
 			clean
 			exit 1
-		elif [[ ! -r $2 ]]
+		elif [ ! -f $2 ] || [ ! -s $2 ] || [ ! -r $2 ]
 		then
 			echo "your file in unreadable, son!" >&2
 			clean
@@ -248,7 +286,7 @@ case $1 in
 			echo "we are finding the average of one matrix, not the entire neighborhood! Geeze." >&2
 			clean
 			exit 1
-		elif [[ ! -r $2 ]]
+		elif [ ! -f $2 ] || [ ! -s $2 ] || [ ! -r $2 ]
 		then
 			echo "i'm tryin' to read, but you gotta give me something, man!" >&2
 			clean
@@ -271,15 +309,21 @@ case $1 in
 			echo "there are only so many usable seconds in a grading script. why are you giving me more than two matrices?!" >&2
 			clean
 			exit 1
-		elif [ ! -r $2 ] || [ ! -r $3 ]
+		elif [ ! -f $2 ] || [ ! -s $2 ] || [ ! -r $2 ]
 		then
 			echo "check yo' file. I don't understand it." >&2
 			clean
 			exit 1
+		elif [ ! -f $3 ] || [ ! -s $3 ] || [ ! -r $3 ]
+		then
+			echo "check yo' file. I don't understand it." >&2
+			clean
+			exit 1	#checking for an empty file#
 		elif [ $lrow -eq 0 ] || [ $rrow -eq 0 ]
 		then
 			echo "empty files do not make for exciting addition." >&2
 			exit 1	
+		#checking that the matrices are the same size#
 		elif [ $lrow -ne $rrow ] || [ $lcol -ne $rcol ]
 		then		
 			echo "your matrices are incompatible and will fight if put together." >&2
@@ -299,21 +343,23 @@ case $1 in
 	
 		if [[ -f $4 ]]
 		then
-			echo "there are only so many usable seconds in a grading script. why are you giving me more than two matrices?!" >&2
+			echo "we've been over this. less is more." >&2
 			clean
 			exit 1
 		elif [ ! -r $2 ] || [ ! -r $3 ]
 		then
-			echo "check yo' file. I don't understand it." >&2
+			echo "this makes no sense." >&2
 			clean
 			exit 1
 		elif [ $lrow -eq 0 ] || [ $rrow -eq 0 ]
 		then
-			echo "empty files do not make for exciting addition." >&2
+			echo "**stares into the void**" >&2
 			exit 1	
+		#checks if the # of cols in the left matrix and # of rows in the right	#
+		# matrix are equal. If not they are incompatible.			#
 		elif [ $lcol -ne $rrow ]
 		then		
-			echo "your matrices are incompatible and will fight if put together." >&2
+			echo "you want them to fight, don't you?" >&2
 			exit 1
 		else
 			multiply $2 $3
@@ -321,6 +367,7 @@ case $1 in
 		
 	;;
 	readmtrx)
+		# <3 #
 		readmtrx $2
 	;;
 	#catchall for bad commands#
@@ -332,9 +379,8 @@ esac
 
 
 clean
-exit 0
-}
 
+}
 #pass arguments from user to main#
 main $1 "${@:2}"
  
