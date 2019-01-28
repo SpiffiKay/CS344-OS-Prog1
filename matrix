@@ -7,8 +7,8 @@
 #Description:
 ################################################################################
 
+temp="temp$$"
 tempmtrx="tempmtrx$$"
-tempdims="tempdims$$"
 temprow="temprow$$"
 tempcol="tempcol$$"
 tempmean="tempmean$$"
@@ -17,8 +17,7 @@ tempavg="tempavg$$"
 left="templeft$$"
 right="tempright$$"
 tempprod="tempprod$$"
-mleft="templeft2$$"
-mright="tempright2$$"
+
 
 
 #calls the clean function to clean up temp files at the end of the program, or #
@@ -30,31 +29,15 @@ mright="tempright2$$"
 function dims(){ 
 	l=0
 	c=0
-	
-#	if [[ $# -ne 1 ]]
-#	then
-#		echo "Please only send one matrix at a time." > &2
-#		clean
-#		exit 2
-#	elif [[ ! -s $1 || ! -f $1 ]]
-#	then
-#		echo "$1 is invalid or empty" > $stderr
-#		clean
-#		exit 2
-#	fi
-	
-	cat $1 > $tempdims 
-	
+
 	#rows#
-	l=$(cat $tempdims | wc -l)
+	l=$(cat $1 | wc -l)
 
 	#columns#
-	c=$(cat $tempdims | head -n 1 | wc -w)
+	c=$(cat $1 | head -n 1 | wc -w)
 	
 	#print dimensions#
 	echo -e  "$l $c"
-
-	exit 0
 }
 
 #transpose funct#
@@ -100,7 +83,8 @@ function mean(){
 			sum=$((sum + i))
 			((count++))		
 		done
-
+		
+		#calculate mean#
 		avg=$(((sum + (count/2)*((sum>0)*2 - 1) )/count))
 		echo "$avg" >> $tempavg
 	done <  $temprow
@@ -127,8 +111,8 @@ function add(){
 	rcol=$(cat $2 | head -n 1 | wc -w)
 
 	#separate the values#
-	cat $1 | tr '\t' '\n' > $left
-	cat $2 | tr '\t' '\n' > $right
+	lft=$(cat $1 | tr '\t' '\n')
+	rght=$(cat $2 | tr '\t' '\n') 
 	
 	#add the matrices#		
 	while read lmtrx <&3 && read rmtrx <&4
@@ -145,7 +129,7 @@ function add(){
 			echo >> $tempmtrx
 			k=0
 		fi
-	done 3< $left 4< $right
+	done 3<<< "$lft" 4<<< "$rght"
 
 	cat $tempmtrx
 }
@@ -204,7 +188,7 @@ function multiply(){
 }
 
 
-#readMatrix funct#
+#readMatrix funct: it's for me, not you ;)#
 function readmtrx(){
 while read mtrx
 do
@@ -218,9 +202,139 @@ clean(){
 	rm -f *$$
 }
 
-#argument 1 from user, identifies what function they would like to use (dims, transpose etc)
-#, and the rest passes the matrices to the arguments 
-$1 "${@:2}"
-clean 
 
+main(){
+ 
+#validate input and call functions#
+case $1 in
+	dims)
+		#gives input from stdin permanency#
+		cat $2 > $temp
+
+		if [[ -f $3 ]]
+		then
+			echo "dims goes dark with more than one matrix." >&2
+			clean
+			exit 1
+		elif [ ! -f $temp ] || [ ! -s $temp  ]
+		then
+			echo "yo' file is broke." >&2
+			clean
+			exit 1
+		else
+			dims $temp
+		fi
+
+	;;
+	transpose)
+
+		if [[ -f $3 ]]
+		then
+			echo "more than one matrix makes transpose cry." >&2
+			clean
+			exit 1
+		elif [[ ! -r $2 ]]
+		then
+			echo "your file in unreadable, son!" >&2
+			clean
+			exit 1
+		else
+			transpose $2
+		fi
+	;;
+	mean)
+		if [[ -f $3  ]]
+		then
+			echo "we are finding the average of one matrix, not the entire neighborhood! Geeze." >&2
+			clean
+			exit 1
+		elif [[ ! -r $2 ]]
+		then
+			echo "i'm tryin' to read, but you gotta give me something, man!" >&2
+			clean
+			exit 1
+		else
+			mean $2
+		fi
+	;;
+	add)	
+		#get dimensions of matrices#	
+		lrow=$(cat $2 | wc -l)
+		lcol=$(cat $2 | head -n 1 | wc -w)
+
+		rrow=$(cat $3 | wc -l)
+		rcol=$(cat $3 | head -n 1 | wc -w)
+
+	
+		if [[ -f $4 ]]
+		then
+			echo "there are only so many usable seconds in a grading script. why are you giving me more than two matrices?!" >&2
+			clean
+			exit 1
+		elif [ ! -r $2 ] || [ ! -r $3 ]
+		then
+			echo "check yo' file. I don't understand it." >&2
+			clean
+			exit 1
+		elif [ $lrow -eq 0 ] || [ $rrow -eq 0 ]
+		then
+			echo "empty files do not make for exciting addition." >&2
+			exit 1	
+		elif [ $lrow -ne $rrow ] || [ $lcol -ne $rcol ]
+		then		
+			echo "your matrices are incompatible and will fight if put together." >&2
+			exit 1
+		else
+			add $2 $3
+		fi
+	;;
+	multiply)
+		#get dimensions of matrices#	
+		lrow=$(cat $2 | wc -l)
+		lcol=$(cat $2 | head -n 1 | wc -w)
+
+		rrow=$(cat $3 | wc -l)
+		rcol=$(cat $3 | head -n 1 | wc -w)
+
+	
+		if [[ -f $4 ]]
+		then
+			echo "there are only so many usable seconds in a grading script. why are you giving me more than two matrices?!" >&2
+			clean
+			exit 1
+		elif [ ! -r $2 ] || [ ! -r $3 ]
+		then
+			echo "check yo' file. I don't understand it." >&2
+			clean
+			exit 1
+		elif [ $lrow -eq 0 ] || [ $rrow -eq 0 ]
+		then
+			echo "empty files do not make for exciting addition." >&2
+			exit 1	
+	#	elif [ $lrow -ne $rcol ] || [ $lcol -ne $rrow ]
+	#	then		
+	#		echo "your matrices are incompatible and will fight if put together." >&2
+	#		exit 1
+		else
+			multiply $2 $3
+		fi
+		
+	;;
+	readmtrx)
+		readmtrx $2
+	;;
+	#catchall for bad commands#
+	*)
+		echo "I see what you did there, you saucy minx. Of course, I already thought of that. This program has well defined parameters. Stay in you're lane. ;)" >&2 
+		exit 1
+	;;
+esac 
+
+
+clean
+exit 0
+}
+
+#pass arguments from user to main#
+main $1 "${@:2}"
  
